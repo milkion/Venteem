@@ -88,15 +88,17 @@ public class NewEvent extends AppCompatActivity {
 //            TODO snackbar for undo action
         });
 
-        recyclerView = findViewById(R.id.eventCategoryRecycler);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        loadCategoryFragment(null);
 
-        listEventCategory = getEventCategoryFromSharedPreference();
-
-        recyclerAdapter = new CategoryRecyclerAdapter();
-        recyclerAdapter.setCategory(listEventCategory);
-        recyclerView.setAdapter(recyclerAdapter);
+//        recyclerView = findViewById(R.id.eventCategoryRecycler);
+//        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+//        recyclerView.setLayoutManager(layoutManager);
+//
+//        listEventCategory = getEventCategoryFromSharedPreference();
+//
+//        recyclerAdapter = new CategoryRecyclerAdapter();
+//        recyclerAdapter.setCategory(listEventCategory);
+//        recyclerView.setAdapter(recyclerAdapter);
     }
 
     public void onSaveEventButtonClick(View view){
@@ -155,7 +157,6 @@ public class NewEvent extends AppCompatActivity {
 
     public boolean onCreateOptionsMenu(Menu menu){
         getMenuInflater().inflate(R.menu.options_menu, menu);
-
         return true;
     }
 
@@ -164,35 +165,53 @@ public class NewEvent extends AppCompatActivity {
 
 //        TODO: IMPLEMENT THE CODE BODY
         if (item.getItemId() == R.id.optionDeleteAllCategories){
-            return true;
+            clearAllCategory();
+
         } else if (item.getItemId() == R.id.optionDeleteAllEvents){
             return true;
         } else if (item.getItemId() == R.id.optionsClearEventForm){
-            return true;
+            clearEventForm();
+
         } else if (item.getItemId() == R.id.optionsRefresh){
 
-            System.out.println("Refresh clicked");
-            ArrayList<EventCategory> cat = getEventCategoryFromSharedPreference();
-            recyclerAdapter.setCategory(cat);
-            recyclerAdapter.notifyDataSetChanged();
+//            System.out.println("Refresh clicked");
+//            ArrayList<EventCategory> cat = getEventCategoryFromSharedPreference();
+//            recyclerAdapter.setCategory(cat);
+//            recyclerAdapter.notifyDataSetChanged();
 
-            return true;
+            loadCategoryFragment(null);
+
         }
 
         return true;
     }
 
-    public ArrayList<EventCategory> getEventCategoryFromSharedPreference(){
-
+    public void clearAllCategory(){
         SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
-        String json = sharedPreferences.getString("KEY_CATEGORY", "[]");
-        Type type = new TypeToken<ArrayList<EventCategory>>() {}.getType();
-        ArrayList<EventCategory> eventCategoryList = new Gson().fromJson(json, type);
-
-        Log.d("NewEvent", "Retrieved from shared preferences: " + json);
-
-        return eventCategoryList;
+        SharedPreferences.Editor editor = sharedPreferences.edit().remove("KEY_CATEGORY");
+        editor.apply();
     }
+
+    public void clearEventForm(){
+
+        eventId.setText("");
+        categoryId.setText("");
+        eventName.setText("");
+        ticketsAvailable.setText("");
+        isActiveEvent.setChecked(false);
+    }
+
+//    public ArrayList<EventCategory> getEventCategoryFromSharedPreference(){
+//
+//        SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
+//        String json = sharedPreferences.getString("KEY_CATEGORY", "[]");
+//        Type type = new TypeToken<ArrayList<EventCategory>>() {}.getType();
+//        ArrayList<EventCategory> eventCategoryList = new Gson().fromJson(json, type);
+//
+//        Log.d("NewEvent", "Retrieved from shared preferences: " + json);
+//
+//        return eventCategoryList;
+//    }
 
     private void saveDataToSharedPreference(String eventId, String eventCatId, String eventName, int ticketCount, boolean eventActive ){
 
@@ -207,6 +226,10 @@ public class NewEvent extends AppCompatActivity {
         editor.putBoolean("KEY_EVENT_ACTIVE", eventActive);
 
         editor.apply();
+    }
+
+    public void loadCategoryFragment(View view){
+        getSupportFragmentManager().beginTransaction().replace(R.id.category_container, new FragmentListCategory()).commit();
     }
 
 }
