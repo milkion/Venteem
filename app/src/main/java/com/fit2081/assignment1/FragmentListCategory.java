@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -13,7 +14,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.fit2081.assignment1.provider.EventCategoryViewModel;
 import com.google.gson.Gson;
+import com.google.gson.internal.bind.ArrayTypeAdapter;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.annotation.Inherited;
@@ -25,10 +28,11 @@ import java.util.ArrayList;
 
 public class FragmentListCategory extends Fragment {
 
-    private ArrayList<EventCategory> listCategory = new ArrayList<>();
-
     private RecyclerView recyclerView;
-    private CategoryRecyclerAdapter categoryRecyclerAdapter;
+
+    private EventCategoryViewModel eventCategoryViewModel;
+
+    private CategoryRecyclerAdapter adapter;
 
 
     @Override
@@ -38,26 +42,19 @@ public class FragmentListCategory extends Fragment {
         View view = inflater.inflate(R.layout.fragment_list_category, container, false);
 
         recyclerView = view.findViewById(R.id.eventCategoryRecycler);
+        adapter = new CategoryRecyclerAdapter();
+        recyclerView.setAdapter(adapter);
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        listCategory = getEventCategoryFromSharedPreference();
-
-        categoryRecyclerAdapter = new CategoryRecyclerAdapter();
-        categoryRecyclerAdapter.setCategory(listCategory);
-        recyclerView.setAdapter(categoryRecyclerAdapter);
+        eventCategoryViewModel = new ViewModelProvider(this).get(EventCategoryViewModel.class);
+        eventCategoryViewModel.getAllEventCategory().observe(getViewLifecycleOwner(), newData -> {
+            adapter.setCategory(new ArrayList<EventCategory>(newData));
+            adapter.notifyDataSetChanged();
+        });
 
         return view;
     }
 
-    public ArrayList<EventCategory> getEventCategoryFromSharedPreference(){
-
-        SharedPreferences sharedPreferences = this.getActivity().getSharedPreferences("UNIQUE_FILE_NAME", Context.MODE_PRIVATE);
-        String json = sharedPreferences.getString("KEY_CATEGORY", "[]");
-        Type type = new TypeToken<ArrayList<EventCategory>>() {}.getType();
-        ArrayList<EventCategory> eventCategoryList = new Gson().fromJson(json, type);
-
-
-        return eventCategoryList;
-    }
 }

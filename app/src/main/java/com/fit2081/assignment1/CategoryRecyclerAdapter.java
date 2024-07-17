@@ -1,5 +1,8 @@
 package com.fit2081.assignment1;
 
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +24,7 @@ public class CategoryRecyclerAdapter extends RecyclerView.Adapter<CategoryRecycl
     @NonNull
     @Override
     public CustomViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_layout, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.category_card_layout, parent, false);
         CustomViewHolder viewHolder = new CustomViewHolder(v);
         return viewHolder;
     }
@@ -37,6 +40,15 @@ public class CategoryRecyclerAdapter extends RecyclerView.Adapter<CategoryRecycl
         } else {
             holder.tvActive.setText("Inactive");
         }
+
+        holder.itemView.setOnClickListener(v ->{
+            String location = data.get(position).getLocation();
+
+            Context context = holder.itemView.getContext();
+            Intent intent = new Intent(context, MapsActivity.class);
+            intent.putExtra("location", location);
+            context.startActivity(intent);
+        });
     }
 
     @Override
@@ -47,7 +59,6 @@ public class CategoryRecyclerAdapter extends RecyclerView.Adapter<CategoryRecycl
 
         return 0;
     }
-
 
 
     public class CustomViewHolder extends RecyclerView.ViewHolder {
@@ -61,8 +72,8 @@ public class CategoryRecyclerAdapter extends RecyclerView.Adapter<CategoryRecycl
             super(itemView);
             tvCategoryId = itemView.findViewById(R.id.tv_id);
             tvCategoryName = itemView.findViewById(R.id.tv_name);
-            tvEventCount = itemView.findViewById(R.id.tv_eventCount);
-            tvActive = itemView.findViewById(R.id.tv_active);
+            tvEventCount = itemView.findViewById(R.id.tv_event_count);
+            tvActive = itemView.findViewById(R.id.tv_tickets);
 
         }
     }

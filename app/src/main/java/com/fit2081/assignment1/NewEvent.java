@@ -1,40 +1,43 @@
 package com.fit2081.assignment1;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.view.GestureDetectorCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.fit2081.assignment1.provider.EventCategoryViewModel;
+import com.fit2081.assignment1.provider.EventViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.w3c.dom.Text;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.StringTokenizer;
-
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class NewEvent extends AppCompatActivity {
@@ -47,16 +50,20 @@ public class NewEvent extends AppCompatActivity {
 
     DrawerLayout drawerlayout;
 
-    ArrayList<EventCategory> listEventCategory = new ArrayList<>();
+    ArrayList<Event> listEvent;
 
-    CategoryRecyclerAdapter recyclerAdapter;
-    private RecyclerView recyclerView;
+
+    private EventCategoryViewModel eventCategoryViewModel;
+
+    private EventViewModel eventViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_bar_layout);
+
+        listEvent = new ArrayList<>();
 
         eventId = findViewById(R.id.textViewEventID);
         categoryId = findViewById(R.id.editTextEventCatId);
@@ -68,6 +75,21 @@ public class NewEvent extends AppCompatActivity {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(myToolbar);
 
+
+        View touchpad = findViewById(R.id.view);
+        TextView tvGestures = findViewById(R.id.tvGestures);
+
+        CustomGestureDetector customGestureDetector = new CustomGestureDetector(tvGestures, this);
+        GestureDetectorCompat mDetector = new GestureDetectorCompat(this, customGestureDetector);
+        mDetector.setOnDoubleTapListener(customGestureDetector);
+        touchpad.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mDetector.onTouchEvent(event);
+                return true;
+            }
+        });
+
         drawerlayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new MyNavigationListener(drawerlayout, this));
@@ -77,6 +99,20 @@ public class NewEvent extends AppCompatActivity {
         drawerlayout.addDrawerListener(toggle);
         toggle.syncState();
 
+
+        CategoryRecyclerAdapter categoryAdapter = new CategoryRecyclerAdapter();
+        EventRecyclerAdapter eventAdapter = new EventRecyclerAdapter();
+
+        eventCategoryViewModel = new ViewModelProvider(this).get(EventCategoryViewModel.class);
+        eventCategoryViewModel.getAllEventCategory().observe(this, newData -> {
+            categoryAdapter.setCategory(new ArrayList<EventCategory>(newData));
+        });
+
+        eventViewModel = new ViewModelProvider(this).get(EventViewModel.class);
+        eventViewModel.getAllEvents().observe(this, newData -> {
+            eventAdapter.setEvent(new ArrayList<Event>(newData));
+        });
+
         FloatingActionButton fab = findViewById(R.id.fab);
 
         fab.setOnClickListener(new View.OnClickListener(){
@@ -84,26 +120,57 @@ public class NewEvent extends AppCompatActivity {
             public void onClick(View view) {
                 onSaveEventButtonClick(view);
             }
-
-//            TODO snackbar for undo action
         });
 
-        loadCategoryFragment(null);
 
-//        recyclerView = findViewById(R.id.eventCategoryRecycler);
-//        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-//        recyclerView.setLayoutManager(layoutManager);
-//
-//        listEventCategory = getEventCategoryFromSharedPreference();
-//
-//        recyclerAdapter = new CategoryRecyclerAdapter();
-//        recyclerAdapter.setCategory(listEventCategory);
-//        recyclerView.setAdapter(recyclerAdapter);
+        loadCategoryFragment(null);
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return true;
+    }
+
+    /**
+     * A convenience class to extend when you only want to listen for a subset of all the gestures.
+     */
+    class CustomGestureDetector extends GestureDetector.SimpleOnGestureListener{
+
+        private GestureDetectorCompat mDetector;
+        private ScaleGestureDetector mScaleDetector;
+
+
+        TextView tvGestures;
+        private NewEvent newEvent;
+
+        public CustomGestureDetector(TextView tvGestures, NewEvent newEvent){
+
+            this.tvGestures = tvGestures;
+            this.newEvent = newEvent;
+        }
+
+        @Override
+        public void onLongPress(@NonNull MotionEvent e) {
+            tvGestures.setText("onLongPress");
+            newEvent.clearEventForm();
+            super.onLongPress(e);
+        }
+
+        @Override
+        public boolean onDoubleTap(@NonNull MotionEvent e) {
+            tvGestures.setText("onDoubleTap");
+            newEvent.onSaveEventButtonClick(null);
+            return super.onDoubleTap(e);
+        }
+
+    }
+
 
     public void onSaveEventButtonClick(View view){
 
-        int ticketsAvailableInt;
+        View rootView = findViewById(android.R.id.content);
+
+        AtomicInteger ticketsAvailableInt = new AtomicInteger();
 
         eventId = findViewById(R.id.textViewEventID);
         categoryId = findViewById(R.id.editTextEventCatId);
@@ -121,23 +188,51 @@ public class NewEvent extends AppCompatActivity {
             return;
         }
 
-        eventId.setText(genEventId());
-        String eventIdStr = eventId.getText().toString();
-
-        if (ticketsAvailableStr.isEmpty()){
-            ticketsAvailableInt = 0;
-        } else {
-            ticketsAvailableInt = Integer.parseInt(ticketsAvailableStr);
+        if (!eventNameStr.matches(".*[a-zA-Z].*")){
+            String msg = "Invalid Event Name!";
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        boolean isActiveBool = isActiveEvent.isChecked();
+        LiveData<List<EventCategory>> categoryFind = eventCategoryViewModel.getEventCategoryById(catIdStr);
 
-        saveDataToSharedPreference(eventIdStr, catIdStr, eventNameStr, ticketsAvailableInt, isActiveBool);
+        categoryFind.observe(this, newData -> {
+            if (newData.isEmpty()){
+                String msg = "Category ID not found!";
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            } else {
+                categoryFind.removeObservers(this);
 
-        String msg = "Event saved successfully: " + eventIdStr + " to " + catIdStr;
+                eventId.setText(genEventId());
+                String eventIdStr = eventId.getText().toString();
 
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+                if (ticketsAvailableStr.isEmpty()){
+                    ticketsAvailableInt.set(0);
+                } else {
+                    ticketsAvailableInt.set(Integer.parseInt(ticketsAvailableStr));
+                }
 
+                boolean isActiveBool = isActiveEvent.isChecked();
+
+                Event event = new Event(eventIdStr, catIdStr, eventNameStr, ticketsAvailableInt.get(), isActiveBool);
+                eventViewModel.insert(event);
+
+                EventCategory category = newData.get(0);
+                int eventCount = category.getEventCount();
+                category.setEventCount(eventCount + 1);
+                eventCategoryViewModel.update(category);
+
+                Snackbar undoBar = Snackbar.make(rootView, "Event saved successfully", Snackbar.LENGTH_LONG);
+                undoBar.setAction("UNDO", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        eventViewModel.deleteEvent(eventIdStr);
+                        Snackbar.make(rootView, "Event removed", Snackbar.LENGTH_SHORT).show();
+                    }
+                });
+                undoBar.show();
+            }
+        });
     }
 
     public String genEventId(){
@@ -148,11 +243,9 @@ public class NewEvent extends AppCompatActivity {
         return eventId;
     }
 
-
     static int genRandom(int minNo, int maxNo){
         return (int)((Math.random() * (maxNo-minNo) + minNo));
     }
-
 
 
     public boolean onCreateOptionsMenu(Menu menu){
@@ -163,34 +256,24 @@ public class NewEvent extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item){
 
-//        TODO: IMPLEMENT THE CODE BODY
         if (item.getItemId() == R.id.optionDeleteAllCategories){
-            clearAllCategory();
+            onDeleteCategory();
 
         } else if (item.getItemId() == R.id.optionDeleteAllEvents){
-            return true;
+            onDeleteEvent();
         } else if (item.getItemId() == R.id.optionsClearEventForm){
             clearEventForm();
-
-        } else if (item.getItemId() == R.id.optionsRefresh){
-
-//            System.out.println("Refresh clicked");
-//            ArrayList<EventCategory> cat = getEventCategoryFromSharedPreference();
-//            recyclerAdapter.setCategory(cat);
-//            recyclerAdapter.notifyDataSetChanged();
-
-            loadCategoryFragment(null);
-
         }
 
         return true;
     }
 
-    public void clearAllCategory(){
-        SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit().remove("KEY_CATEGORY");
-        editor.apply();
+    public void onDeleteCategory(){
+        eventCategoryViewModel.deleteAll();
     }
+
+    public void onDeleteEvent(){ eventViewModel.deleteAll(); }
+
 
     public void clearEventForm(){
 
@@ -201,35 +284,10 @@ public class NewEvent extends AppCompatActivity {
         isActiveEvent.setChecked(false);
     }
 
-//    public ArrayList<EventCategory> getEventCategoryFromSharedPreference(){
-//
-//        SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
-//        String json = sharedPreferences.getString("KEY_CATEGORY", "[]");
-//        Type type = new TypeToken<ArrayList<EventCategory>>() {}.getType();
-//        ArrayList<EventCategory> eventCategoryList = new Gson().fromJson(json, type);
-//
-//        Log.d("NewEvent", "Retrieved from shared preferences: " + json);
-//
-//        return eventCategoryList;
-//    }
-
-    private void saveDataToSharedPreference(String eventId, String eventCatId, String eventName, int ticketCount, boolean eventActive ){
-
-        SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.putString("KEY_EVENT_ID", eventId);
-        editor.putString("KEY_EVENT_CAT_ID", eventCatId);
-        editor.putString("KEY_EVENT_NAME", eventName);
-        editor.putInt("KEY_EVENT_TICKETS", ticketCount);
-        editor.putBoolean("KEY_EVENT_ACTIVE", eventActive);
-
-        editor.apply();
-    }
 
     public void loadCategoryFragment(View view){
         getSupportFragmentManager().beginTransaction().replace(R.id.category_container, new FragmentListCategory()).commit();
     }
+
 
 }

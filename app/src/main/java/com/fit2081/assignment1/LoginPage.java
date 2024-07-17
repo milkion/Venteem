@@ -51,7 +51,7 @@ public class LoginPage extends AppCompatActivity {
             editor.putBoolean("KEY_LOGIN_ONCE", true);
             editor.apply();
 
-            Intent intentDashboard = new Intent(this, DashboardActivity.class);
+            Intent intentDashboard = new Intent(this, NewEvent.class);
             startActivity(intentDashboard);
 
             tvPassword.setText("");

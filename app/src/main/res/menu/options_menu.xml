@@ -3,10 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/optionsRefresh"
-        android:title="Refresh"
-        app:showAsAction="always" />
-    <item
         android:id="@+id/optionsClearEventForm"
         android:title="Clear Event Form" />
     <item

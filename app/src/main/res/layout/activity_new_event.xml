@@ -10,7 +10,7 @@
     tools:layout_editor_absoluteY="0dp">
 
     <TextView
-        android:id="@+id/textView13"
+        android:id="@+id/textView40"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="42dp"
@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="148dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="8dp"
         android:text="D A S H B O A R D"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,7 +37,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="304dp"
+        android:layout_marginTop="236dp"
         android:fontFamily="@font/violetsansregular"
         android:text="NEW EVENT FORM"
         android:textSize="16sp"
@@ -158,12 +158,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTicketNumber" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
+    <View
+        android:id="@+id/view"
+        android:layout_width="322dp"
+        android:layout_height="143dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="40dp"
+        android:background="#FFE7ECEF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fab" />
+
+    <TextView
+        android:id="@+id/tvGestures"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="204dp"
+        android:layout_marginTop="64dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/view" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="56dp"
+        android:layout_height="0dp"
         android:layout_marginStart="312dp"
-        android:layout_marginTop="104dp"
+        android:layout_marginTop="56dp"
         android:clickable="true"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTicketNumber"
@@ -172,17 +191,11 @@
     <FrameLayout
         android:id="@+id/category_container"
         android:layout_width="411dp"
-        android:layout_height="237dp"
+        android:layout_height="192dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:isScrollContainer="false"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView17"
-        app:layout_constraintVertical_bias="0.0">
-
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/textView17" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

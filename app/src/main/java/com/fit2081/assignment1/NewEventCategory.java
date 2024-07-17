@@ -2,6 +2,7 @@ package com.fit2081.assignment1;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fit2081.assignment1.provider.EventCategoryViewModel;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -32,6 +34,10 @@ public class NewEventCategory extends AppCompatActivity {
     private TextView eventCount;
     private Switch isActiveCategory;
 
+    private TextView location;
+
+    private EventCategoryViewModel eventCategoryViewModel;
+
     ArrayList<EventCategory> categoryList;
 
     Gson gson = new Gson();
@@ -46,8 +52,11 @@ public class NewEventCategory extends AppCompatActivity {
         categoryName = findViewById(R.id.editTextCatName);
         eventCount = findViewById(R.id.editTextEventCount);
         isActiveCategory = findViewById(R.id.eventIsActive);
+        location = findViewById(R.id.editTextLocation);
 
         categoryList = new ArrayList<>();
+
+        eventCategoryViewModel = new ViewModelProvider(this).get(EventCategoryViewModel.class);
 
     }
 
@@ -59,12 +68,20 @@ public class NewEventCategory extends AppCompatActivity {
         categoryName = findViewById(R.id.editTextCatName);
         eventCount = findViewById(R.id.editTextEventCount);
         isActiveCategory = findViewById(R.id.eventIsActive);
+        location = findViewById(R.id.editTextLocation);
 
         String catNameStr = categoryName.getText().toString();
         String eventCountStr = eventCount.getText().toString();
+        String locationStr = location.getText().toString();
 
         if (catNameStr.isEmpty()) {
             String msg = "Category Name is required!";
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!catNameStr.matches(".*[a-zA-Z].*")){
+            String msg = "Invalid Event Name!";
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -78,42 +95,21 @@ public class NewEventCategory extends AppCompatActivity {
             eventCountInt = Integer.parseInt(eventCountStr);
         }
 
+        if (locationStr.isEmpty()){
+            locationStr = "No Location Saved!";
+        }
+
         boolean isActiveBool = isActiveCategory.isChecked();
 
 
-        EventCategory eventCategory = new EventCategory(catIdStr, catNameStr, eventCountInt, isActiveBool);
-        ArrayList<EventCategory> categoryListOld = getEventCategoryFromSharedPreference();
-        categoryListOld.add(eventCategory);
-
-        categoryList = categoryListOld;
-
-        saveArrayListAsText();
+        EventCategory eventCategory = new EventCategory(catIdStr, catNameStr, eventCountInt, isActiveBool, locationStr);
+        eventCategoryViewModel.insert(eventCategory);
 
         String msg = "Category saved successfully: " + catIdStr;
 
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    public ArrayList<EventCategory> getEventCategoryFromSharedPreference(){
-
-        SharedPreferences sharedPreferences = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE);
-        String json = sharedPreferences.getString("KEY_CATEGORY", "[]");
-        Type type = new TypeToken<ArrayList<EventCategory>>() {}.getType();
-        ArrayList<EventCategory> eventCategoryList = new Gson().fromJson(json, type);
-
-        Log.d("NewEvent", "Retrieved from shared preferences: " + json);
-
-        return eventCategoryList;
-    }
-
-    private void saveArrayListAsText(){
-
-        String arrayListStr = gson.toJson(categoryList);
-        Log.d("NewEventCategory", "Saving to shared preferences: " +arrayListStr);
-        SharedPreferences.Editor editor = getSharedPreferences("UNIQUE_FILE_NAME", MODE_PRIVATE).edit();
-        editor.putString("KEY_CATEGORY", arrayListStr);
-        editor.apply();
-    }
 
     public String genCategoryId(){
 
