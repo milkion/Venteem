@@ -4,6 +4,8 @@
 
 This Android application is designed to manage events efficiently. It allows users to view, create, and manage event categories and individual events. The app also integrates with Google Maps to display event locations.
 
+![img.png](img.png)
+
 ## Features
 
 - **Event Categories**: View and manage different categories of events.
